@@ -6,13 +6,10 @@ server.listen(process.env.PORT || 3000);
 
 var clients = {};
 io.sockets.on('connection', function (socket) {
-    console.log("Have user connected")
-
-    socket.on('login', function (data) {
-        clients[data.username] = {
-            "socket": socket.id
-        };
-    });
+    console.log("user %s connected", socket.handshake.query.token);
+    clients[socket.handshake.query.token] = {
+        "socket": socket.id
+    };
 
     socket.on('sendMessage', function (data) {
         console.log("Sending: " + data.content + " to " + data.username);
