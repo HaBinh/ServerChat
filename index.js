@@ -12,11 +12,35 @@ io.sockets.on('connection', function (socket) {
     };
 
     socket.on('sendMessage', function (data) {
-        console.log("Sending: " + data.content + " to " + data.username);
-        if (clients[data.username]) {
-            io.sockets.connected[clients[data.username].socket].emit("receiverMessage", data);
-        } else {
-            console.log("User does not exist: " + data.username);
+        if (clients[data.roomId]) {
+            io.sockets.connected[clients[data.roomId].socket].emit("receiverMessage", data);
+        }
+    });
+
+    socket.on('call', function (data) {
+        //console.log('call' + data.roomId);
+        if (clients[data.roomId]) {
+            io.sockets.connected[clients[data.roomId].socket].emit("call", {
+                "roomId" : socket.handshake.query.token
+            });
+        }
+    });
+
+    socket.on('callContent', function (data) {
+        if (clients[data.roomId]) {
+            io.sockets.connected[clients[data.roomId].socket].emit("callContent", data);
+        }
+    });
+
+    socket.on('callAccept', function (data) {
+        if (clients[data.roomId]) {
+            io.sockets.connected[clients[data.roomId].socket].emit("callAccept", data);
+        }
+    });
+
+    socket.on('callStop', function (data) {
+        if (clients[data.roomId]) {
+            io.sockets.connected[clients[data.roomId].socket].emit("callStop", data);
         }
     });
 
