@@ -2,7 +2,7 @@ var express = require("express");
 var app = express();
 var server = require("http").createServer(app);
 var io = require("socket.io").listen(server);
-server.listen(process.env.PORT || 3000);
+server.listen(3000);
 
 //socket
 var clients = {};
@@ -113,7 +113,9 @@ app.post('/user/register', function (req, res) {
                 } else {
                     body.status = 200;
                     body.message = 'Success';
-                    body.data = null;
+                    body.data = {
+                        'id': result.insertId
+                    };
                     res.send(body);
                 }
             });
@@ -126,3 +128,53 @@ app.post('/user/register', function (req, res) {
         }
     });
 });
+
+/**
+ * [
+ *  {
+ *      "roomId": 1,
+ *      "users": [
+ *          {
+ *              "id" : 5,
+ *              "userName" : "dungpv",
+ *              "firstName" : "Pham",
+ *              "lastName" : "Dung"
+ *          }
+ *      ]
+ *  }
+ * ]
+ */
+app.get('/rooms', async function (req, res) {
+    var sql = 'SELECT Rooms.id FROM Rooms INNER JOIN RoomUsers ON Rooms.id = RoomUsers.idRoom WHERE RoomUsers.idUser = ?';
+    var param = [req.headers.authorization];
+    var result = await query(sql, param);
+    var rooms = [];
+    const roomIds = result.map(room => room.id);
+    sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
+    for (var i = 0; i < roomIds.length; i++) {
+        param = [roomIds[i]];
+        var users = await query(sql, param);
+        var room = {
+            "roomId" : roomIds[i],
+            'users': users
+        };
+        rooms.push(room);
+    }
+    body.status = 200;
+    body.message = 'Success';
+    body.data = {
+        'rooms' : rooms
+    };
+    res.send(body);
+});
+
+function query(sql, param) {
+    return new Promise((resolve, reject) => {
+        con.query(sql, param, function (err, result) {
+            if(err) {
+                reject(err);
+            }
+            resolve(result);
+        });
+    })
+}
