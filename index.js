@@ -3,58 +3,6 @@ var app = express();
 var server = require("http").createServer(app);
 var io = require("socket.io").listen(server);
 server.listen(3000);
-
-//socket
-var clients = {};
-io.sockets.on('connection', function (socket) {
-    console.log("user %s connected", socket.handshake.query.token);
-    clients[socket.handshake.query.token] = {
-        "socket": socket.id
-    };
-
-    socket.on('sendMessage', function (data) {
-        if (clients[data.roomId]) {
-            io.sockets.connected[clients[data.roomId].socket].emit("receiverMessage", data);
-        }
-    });
-
-    socket.on('call', function (data) {
-        if (clients[data.roomId]) {
-            io.sockets.connected[clients[data.roomId].socket].emit("call", {
-                "roomId": socket.handshake.query.token
-            });
-        }
-    });
-
-    socket.on('callContent', function (data) {
-        if (clients[data.roomId]) {
-            io.sockets.connected[clients[data.roomId].socket].emit("callContent", data);
-        }
-    });
-
-    socket.on('callAccept', function (data) {
-        if (clients[data.roomId]) {
-            io.sockets.connected[clients[data.roomId].socket].emit("callAccept", data);
-        }
-    });
-
-    socket.on('callStop', function (data) {
-        if (clients[data.roomId]) {
-            io.sockets.connected[clients[data.roomId].socket].emit("callStop", data);
-        }
-    });
-
-    //Removing the socket on disconnect
-    socket.on('disconnect', function () {
-        for (var name in clients) {
-            if (clients[name].socket === socket.id) {
-                delete clients[name];
-                break;
-            }
-        }
-    });
-});
-
 //Mysql config
 var mysql = require('mysql');
 var con = mysql.createConnection({
@@ -69,6 +17,67 @@ con.connect(function (err) {
     } else {
         console.log("connected!!!");
     }
+});
+//socket
+var clients = {};
+io.sockets.on('connection', function (socket) {
+    var userId = socket.handshake.query.token;
+    console.log("user %s connected", userId);
+    clients[userId] = {
+        "socket": socket.id
+    };
+    var sql = 'SELECT Rooms.id FROM Rooms INNER JOIN RoomUsers ON Rooms.id = RoomUsers.idRoom WHERE RoomUsers.idUser = ?';
+    var param = [userId];
+    con.query(sql, param, function (err, result) {
+       result.forEach(room => {
+           console.log(userId + ' join to ' + room.id);
+           socket.join(room.id);
+       });
+    });
+
+    socket.on('sendMessage', function (data) {
+        socket.broadcast.to(data.roomId).emit("receiverMessage", data);
+    });
+
+    socket.on('call', function (data) {
+        /*if (clients[data.roomId]) {
+            io.sockets.connected[clients[data.roomId].socket].emit("call", {
+                "roomId": userId
+            });
+        }*/
+        socket.broadcast.to(data.roomId).emit("call", data);
+    });
+
+    socket.on('callContent', function (data) {
+        /*if (clients[data.roomId]) {
+            io.sockets.connected[clients[data.roomId].socket].emit("callContent", data);
+        }*/
+        socket.broadcast.to(data.roomId).emit("callContent", data);
+    });
+
+    socket.on('callAccept', function (data) {
+        /*if (clients[data.roomId]) {
+            io.sockets.connected[clients[data.roomId].socket].emit("callAccept", data);
+        }*/
+        socket.broadcast.to(data.roomId).emit("callAccept", data);
+    });
+
+    socket.on('callStop', function (data) {
+        /*if (clients[data.roomId]) {
+            io.sockets.connected[clients[data.roomId].socket].emit("callStop", data);
+        }*/
+        socket.broadcast.to(data.roomId).emit("callStop", data);
+    });
+
+    //Removing the socket on disconnect
+    socket.on('disconnect', function () {
+        for (var name in clients) {
+            if (clients[name].socket === socket.id) {
+                delete clients[name];
+                break;
+            }
+        }
+    });
 });
 
 //Api
@@ -166,6 +175,37 @@ app.get('/rooms', async function (req, res) {
         'rooms' : rooms
     };
     res.send(body);
+});
+
+app.post('/room', function (req, res) {
+    var sql = 'INSERT INTO Rooms (roomName) VALUES (?)';
+    var param = [req.body.roomName];
+    con.query(sql, param, function (err, result) {
+        var roomId = result.insertId;
+        var sender = req.headers.authorization;
+        var userIds = req.body.ids;
+        userIds.push(sender);
+        param = userIds.map(id => {
+            return [
+                parseInt(id),
+                roomId
+            ]
+        });
+        userIds.forEach(id => {
+            if (clients[id]) {
+                io.sockets.connected[clients[id].socket].join(roomId);
+            }
+        });
+        sql = 'INSERT INTO RoomUsers (idUser, idRoom) VALUES ?';
+        con.query(sql, [param]);
+        body.status = 200;
+        body.message = 'Success';
+        body.data = {
+            'roomId' : roomId
+        };
+        res.send(body);
+    });
+
 });
 
 function query(sql, param) {
