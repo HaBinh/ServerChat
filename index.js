@@ -1,11 +1,11 @@
-var express = require("express");
-var app = express();
-var server = require("http").createServer(app);
-var io = require("socket.io").listen(server);
+let express = require("express");
+let app = express();
+let server = require("http").createServer(app);
+let io = require("socket.io").listen(server);
 server.listen(3000);
 //Mysql config
-var mysql = require('mysql');
-var con = mysql.createConnection({
+let mysql = require('mysql');
+let con = mysql.createConnection({
     host: "localhost",
     user: "root",
     database: "simpleChat"
@@ -19,15 +19,15 @@ con.connect(function (err) {
     }
 });
 //socket
-var clients = {};
+let clients = {};
 io.sockets.on('connection', function (socket) {
-    var userId = socket.handshake.query.token;
+    let userId = socket.handshake.query.token;
     console.log("user %s connected", userId);
     clients[userId] = {
         "socket": socket.id
     };
-    var sql = 'SELECT Rooms.id FROM Rooms INNER JOIN RoomUsers ON Rooms.id = RoomUsers.idRoom WHERE RoomUsers.idUser = ?';
-    var param = [userId];
+    let sql = 'SELECT Rooms.id FROM Rooms INNER JOIN RoomUsers ON Rooms.id = RoomUsers.idRoom WHERE RoomUsers.idUser = ?';
+    let param = [userId];
     con.query(sql, param, function (err, result) {
        result.forEach(room => {
            console.log(userId + ' join to ' + room.id);
@@ -71,7 +71,7 @@ io.sockets.on('connection', function (socket) {
 
     //Removing the socket on disconnect
     socket.on('disconnect', function () {
-        for (var name in clients) {
+        for (let name in clients) {
             if (clients[name].socket === socket.id) {
                 delete clients[name];
                 break;
@@ -81,17 +81,17 @@ io.sockets.on('connection', function (socket) {
 });
 
 //Api
-var bodyParser = require('body-parser')
+let bodyParser = require('body-parser');
 app.use(bodyParser.json());       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
     extended: true
 }));
-var body = {};
+let body = {};
 app.post('/user/login', function (req, res) {
-    var sql = 'SELECT id, firstName, lastName, createdAt FROM User WHERE userName = ? and password = ?';
-    var param = [req.body.userName, req.body.password];
+    let sql = 'SELECT id, firstName, lastName, createdAt FROM User WHERE userName = ? and password = ?';
+    let param = [req.body.userName, req.body.password];
     con.query(sql, param, function (err, result) {
-        console.log(result);
+        //console.log(result);
         if (result != null && result != '') {
             body.status = 200;
             body.message = 'Success';
@@ -107,8 +107,8 @@ app.post('/user/login', function (req, res) {
 });
 
 app.post('/user/register', function (req, res) {
-    var sql = 'SELECT * FROM User WHERE userName = ?';
-    var param = [req.body.userName];
+    let sql = 'SELECT * FROM User WHERE userName = ?';
+    let param = [req.body.userName];
     con.query(sql, param, function (err, result) {
         if (result == null || result == '') {
             sql = 'INSERT INTO User (userName, password, firstName, lastName) VALUES (?, ?, ?, ?)';
@@ -154,17 +154,17 @@ app.post('/user/register', function (req, res) {
  * ]
  */
 app.get('/rooms', async function (req, res) {
-    var sql = 'SELECT Rooms.id FROM Rooms INNER JOIN RoomUsers ON Rooms.id = RoomUsers.idRoom WHERE RoomUsers.idUser = ?';
-    var param = [req.headers.authorization];
-    var result = await query(sql, param);
-    var rooms = [];
+    let sql = 'SELECT Rooms.id FROM Rooms INNER JOIN RoomUsers ON Rooms.id = RoomUsers.idRoom WHERE RoomUsers.idUser = ?';
+    let param = [req.headers.authorization];
+    let result = await query(sql, param);
+    let rooms = [];
     const roomIds = result.map(room => room.id);
     sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
-    for (var i = 0; i < roomIds.length; i++) {
+    for (let i = 0; i < roomIds.length; i++) {
         param = [roomIds[i]];
-        var users = await query(sql, param);
-        var room = {
-            "roomId" : roomIds[i],
+        let users = await query(sql, param);
+        let room = {
+            "roomId": roomIds[i],
             'users': users
         };
         rooms.push(room);
@@ -178,12 +178,12 @@ app.get('/rooms', async function (req, res) {
 });
 
 app.post('/room', function (req, res) {
-    var sql = 'INSERT INTO Rooms (roomName) VALUES (?)';
-    var param = [req.body.roomName];
+    let sql = 'INSERT INTO Rooms (roomName) VALUES (?)';
+    let param = [req.body.roomName];
     con.query(sql, param, function (err, result) {
-        var roomId = result.insertId;
-        var sender = req.headers.authorization;
-        var userIds = req.body.ids;
+        let roomId = result.insertId;
+        let sender = req.headers.authorization;
+        let userIds = req.body.ids;
         userIds.push(sender);
         param = userIds.map(id => {
             return [
