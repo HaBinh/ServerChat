@@ -27,8 +27,9 @@ io.sockets.on('connection', function (socket) {
     let sql = 'SELECT id, firstName, lastName FROM User WHERE id = ?';
     con.query(sql, param, function (err, result) {
         let data = {
-            "user" : result[0]
+            "user": result[0]
         };
+        //console.log(data);
         socket.broadcast.emit('onUserOnline', data);
     });
     clients[userId] = {
@@ -37,10 +38,10 @@ io.sockets.on('connection', function (socket) {
     sql = 'SELECT Rooms.id FROM Rooms INNER JOIN RoomUsers ON Rooms.id = RoomUsers.idRoom WHERE RoomUsers.idUser = ?';
     param = [userId];
     con.query(sql, param, function (err, result) {
-       result.forEach(room => {
-           console.log(userId + ' join to ' + room.id);
-           socket.join(room.id);
-       });
+        result.forEach(room => {
+            //console.log(userId + ' join to ' + room.id);
+            socket.join(room.id);
+        });
     });
 
     socket.on('sendMessage', function (data) {
@@ -58,10 +59,10 @@ io.sockets.on('connection', function (socket) {
         let param = [userIds]
         let sql = 'SELECT id, firstName, lastName FROM User WHERE id IN (?)';
         con.query(sql, param, function (err, result) {
-           let res = {
-               "users" : result
-           };
-           socket.emit("getUsersOnline", res);
+            let res = {
+                "users": result
+            };
+            socket.emit("getUsersOnline", res);
         });
     });
 
@@ -89,9 +90,9 @@ io.sockets.on('connection', function (socket) {
         let sql = 'SELECT id, firstName, lastName FROM User WHERE id = ?';
         con.query(sql, param, function (err, result) {
             let data = {
-                "user" : result[0]
+                "user": result[0]
             };
-           socket.broadcast.emit('onUserOffline', data);
+            socket.broadcast.emit('onUserOffline', data);
         });
         for (let name in clients) {
             if (clients[name].socket === socket.id) {
@@ -202,6 +203,7 @@ app.get('/rooms', async function (req, res) {
     body.status = 200;
     body.message = 'Success';
     body.data = rooms;
+    //console.log(rooms);
     res.send(body);
 });
 
@@ -210,16 +212,23 @@ app.post('/room', async function (req, res) {
     let param = [req.body.roomName, req.body.type];
     let result = await query(sql, param);
     let roomId = result.insertId;
-    let sender = req.headers.authorization;
-    let userIds = req.body.ids;
-    userIds.push(sender);
-    param = userIds.map(id => {
+    let ids;
+    if (!Array.isArray(req.body.ids)) {
+        ids = [];
+        ids.push(req.body.ids);
+    } else {
+        ids = req.body.ids;
+
+    }
+    ids.push(req.headers.authorization);
+    console.log(ids);
+    param = ids.map(id => {
         return [
             parseInt(id),
             roomId
         ]
     });
-    userIds.forEach(id => {
+    ids.forEach(id => {
         if (clients[id]) {
             io.sockets.connected[clients[id].socket].join(roomId);
         }
@@ -229,7 +238,7 @@ app.post('/room', async function (req, res) {
     body.status = 200;
     body.message = 'Success';
     body.data = {
-        'roomId' : roomId
+        'roomId': roomId
     };
     res.send(body);
 
@@ -238,7 +247,7 @@ app.post('/room', async function (req, res) {
 function query(sql, param) {
     return new Promise((resolve, reject) => {
         con.query(sql, param, function (err, result) {
-            if(err) {
+            if (err) {
                 reject(err);
             }
             resolve(result);
