@@ -250,17 +250,24 @@ app.get('/room/:id', async function (req, res) {
     let sql = 'SELECT * FROM Rooms WHERE id = ?';
     let param = [roomId];
     let rooms = await query(sql, param);
-    let room = {};
-    room.roomId = rooms[0].id;
-    room.type = rooms[0];
-    sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
-    param = [roomId];
-    room.users = await query(sql, param);
-    body.status = 200;
-    body.message = 'Success';
-    body.data = room;
-    console.log(room);
+    if (rooms.length === 0) {
+        body.status = 201;
+        body.message = 'Room does not exist';
+        body.data = {};
+    } else {
+        let room = {};
+        room.roomId = rooms[0].id;
+        room.type = rooms[0].type;
+        sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
+        param = [roomId];
+        room.users = await query(sql, param);
+        body.status = 200;
+        body.message = 'Success';
+        body.data = room;
+    }
+    console.log(body.data);
     res.send(body);
+
 });
 
 function query(sql, param) {
