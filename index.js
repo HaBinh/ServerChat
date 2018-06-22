@@ -234,13 +234,21 @@ app.post('/room', async function (req, res) {
             io.sockets.connected[clients[id].socket].join(roomId);
         }
     });
+
     sql = 'INSERT INTO RoomUsers (idUser, idRoom) VALUES ?';
-    con.query(sql, [param]);
+    result = await query(sql, [param]);
+    
+    sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
+    param = [roomId];
     body.status = 200;
     body.message = 'Success';
     body.data = {
-        'roomId': roomId
+        'roomId': roomId,
+        'roomName': req.body.roomName,
+        'type': req.body.type,
+        'users': await query(sql, param)
     };
+    onCreatedRoom(req.headers.authorization, body.data);
     res.send(body);
 
 });
@@ -258,6 +266,7 @@ app.get('/room/:id', async function (req, res) {
         let room = {};
         room.roomId = rooms[0].id;
         room.type = rooms[0].type;
+        room.roomName = rooms[0].roomName;
         sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
         param = [roomId];
         room.users = await query(sql, param);
@@ -279,4 +288,8 @@ function query(sql, param) {
             resolve(result);
         });
     })
+}
+
+function onCreatedRoom(sender, room) {
+    io.sockets.connected[clients[sender].socket].broadcast.to(room.roomId).emit("onCreatedRoom", room);
 }
