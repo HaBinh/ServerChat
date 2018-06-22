@@ -265,7 +265,7 @@ app.get('/room/:id', async function (req, res) {
         body.message = 'Success';
         body.data = room;
     }
-    console.log(body.data);
+    //console.log(body.data);
     res.send(body);
 
 });
