@@ -244,6 +244,24 @@ app.post('/room', async function (req, res) {
 
 });
 
+app.get('/room/:id', async function (req, res) {
+    const roomId = req.params.id;
+    let sql = 'SELECT * FROM Rooms WHERE id = ?';
+    let param = [roomId];
+    let rooms = await query(sql, param);
+    let room = {};
+    room.roomId = rooms[0].id;
+    room.type = rooms[0];
+    sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
+    param = [roomId];
+    room.users = await query(sql, param);
+    body.status = 200;
+    body.message = 'Success';
+    body.data = room;
+    console.log(room);
+    res.send(body);
+});
+
 function query(sql, param) {
     return new Promise((resolve, reject) => {
         con.query(sql, param, function (err, result) {
