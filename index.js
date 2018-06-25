@@ -186,17 +186,18 @@ app.post('/user/register', function (req, res) {
  * ]
  */
 app.get('/rooms', async function (req, res) {
-    let sql = 'SELECT Rooms.id FROM Rooms INNER JOIN RoomUsers ON Rooms.id = RoomUsers.idRoom WHERE RoomUsers.idUser = ?';
+    let sql = 'SELECT id, roomName, type FROM Rooms INNER JOIN RoomUsers ON Rooms.id = RoomUsers.idRoom WHERE RoomUsers.idUser = ?';
     let param = [req.headers.authorization];
     let result = await query(sql, param);
     let rooms = [];
-    const roomIds = result.map(room => room.id);
     sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
-    for (let i = 0; i < roomIds.length; i++) {
-        param = [roomIds[i]];
+    for (let i = 0; i < result.length; i++) {
+        param = [result[i].id];
         let users = await query(sql, param);
         let room = {
-            "roomId": roomIds[i],
+            "roomId": result[i].id,
+            "roomName": result[i].roomName,
+            "type": result[i].type,
             'users': users
         };
         rooms.push(room);
