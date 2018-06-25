@@ -172,10 +172,10 @@ app.post('/user/register', function (req, res) {
 
 app.post('/user', function (req, res) {
     let params = [
-        {id: req.headers.authorization},
         {firstName: req.body.firstName},
         {lastName: req.body.lastName},
         {avatar: req.body.avatar},
+        {id: req.headers.authorization}
     ];
     let sql = 'UPDATE User SET ?, ?, ? WHERE ?';
     con.query(sql, params, function (err, result) {
