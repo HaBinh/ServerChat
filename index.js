@@ -25,7 +25,7 @@ io.sockets.on('connection', function (socket) {
     let userId = socket.handshake.query.token;
     console.log("user %s connected", userId);
     let param = [userId];
-    let sql = 'SELECT id, firstName, lastName FROM User WHERE id = ?';
+    let sql = 'SELECT id, firstName, lastName, avatar FROM User WHERE id = ?';
     con.query(sql, param, function (err, result) {
         let data = {
             "user": result[0]
@@ -57,8 +57,8 @@ io.sockets.on('connection', function (socket) {
                 userIds.push(parseInt(name));
             }
         }
-        let param = [userIds]
-        let sql = 'SELECT id, firstName, lastName FROM User WHERE id IN (?)';
+        let param = [userIds];
+        let sql = 'SELECT id, firstName, lastName, avatar FROM User WHERE id IN (?)';
         con.query(sql, param, function (err, result) {
             let res = {
                 "users": result
@@ -88,7 +88,7 @@ io.sockets.on('connection', function (socket) {
         let sender = socket.handshake.query.token;
         console.log("user %s disconnected", sender);
         let param = [sender];
-        let sql = 'SELECT id, firstName, lastName FROM User WHERE id = ?';
+        let sql = 'SELECT id, firstName, lastName, avatar FROM User WHERE id = ?';
         con.query(sql, param, function (err, result) {
             let data = {
                 "user": result[0]
@@ -120,7 +120,7 @@ app.get("", function (req, res) {
 })
 
 app.post('/user/login', function (req, res) {
-    let sql = 'SELECT id, firstName, lastName, createdAt FROM User WHERE userName = ? and password = ?';
+    let sql = 'SELECT id, firstName, lastName, createdAt, avatar FROM User WHERE userName = ? and password = ?';
     let param = [req.body.userName, req.body.password];
     con.query(sql, param, function (err, result) {
         //console.log(result);
@@ -168,6 +168,29 @@ app.post('/user/register', function (req, res) {
             res.send(body);
         }
     });
+});
+
+app.post('/user', function (req, res) {
+    let params = [
+        {id: req.headers.authorization},
+        {firstName: req.body.firstName},
+        {lastName: req.body.lastName},
+        {avatar: req.body.avatar},
+    ];
+    let sql = 'UPDATE User SET ?, ?, ? WHERE ?';
+    con.query(sql, params, function (err, result) {
+        body.data = null;
+        if (err) {
+            body.status = 201;
+            body.message = err;
+            res.send(body);
+        } else {
+            console.log(result.affectedRows + " record(s) updated");
+            body.status = 200;
+            body.message = 'Success';
+            res.send(body);
+        }
+    })
 });
 
 /**
@@ -238,7 +261,7 @@ app.post('/room', async function (req, res) {
 
     sql = 'INSERT INTO RoomUsers (idUser, idRoom) VALUES ?';
     result = await query(sql, [param]);
-    
+
     sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
     param = [roomId];
     body.status = 200;
