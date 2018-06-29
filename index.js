@@ -213,7 +213,7 @@ app.get('/rooms', async function (req, res) {
     let param = [req.headers.authorization];
     let result = await query(sql, param);
     let rooms = [];
-    sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
+    sql = 'SELECT User.id, userName, firstName, lastName, avatar FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
     for (let i = 0; i < result.length; i++) {
         param = [result[i].id];
         let users = await query(sql, param);
