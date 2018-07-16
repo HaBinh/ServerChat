@@ -67,6 +67,10 @@ io.sockets.on('connection', function (socket) {
         });
     });
 
+    socket.on('news', function (data) {
+        io.emit('news', data)
+    });
+
     socket.on('call', function (data) {
         socket.broadcast.to(data.roomId).emit("call", data);
     });
