@@ -75,6 +75,10 @@ io.sockets.on('connection', function (socket) {
         io.emit('likeNews', data)
     });
 
+    socket.on('comment', function (data) {
+        io.emit('comment', data)
+    });
+
     socket.on('call', function (data) {
         socket.broadcast.to(data.roomId).emit("call", data);
     });
