@@ -90,13 +90,17 @@ io.sockets.on('connection', function (socket) {
     socket.on('call', function (data) {
         socket.broadcast.to(data.roomId).emit("call", data);
     });
-    
+
     socket.on('callContent', function (data) {
         socket.broadcast.to(data.roomId).emit("callContent", data);
     });
 
     socket.on('callAccept', function (data) {
         socket.broadcast.to(data.roomId).emit("callAccept", data);
+    });
+
+    socket.on('callBusy', function (data) {
+        socket.broadcast.to(data.roomId).emit("callBusy", data);
     });
 
     socket.on('callStop', function (data) {
