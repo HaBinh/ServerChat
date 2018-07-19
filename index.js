@@ -87,6 +87,10 @@ io.sockets.on('connection', function (socket) {
         socket.broadcast.to(data.roomId).emit("turnOnCamera", data);
     });
 
+    socket.on('call', function (data) {
+        socket.broadcast.to(data.roomId).emit("call", data);
+    });
+    
     socket.on('callContent', function (data) {
         socket.broadcast.to(data.roomId).emit("callContent", data);
     });
