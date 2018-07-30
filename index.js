@@ -51,9 +51,9 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('getUsersOnline', function (data) {
         let mineId = socket.handshake.query.token;
-        let userIds = [];
+        let userIds = []
         for (let name in clients) {
-            if (name !== mineId) {
+            if (name != mineId) {
                 userIds.push(parseInt(name));
             }
         }
@@ -141,14 +141,14 @@ app.get("", function (req, res) {
     body.message = 'Success';
     body.data = "Server OK!";
     res.send(body);
-});
+})
 
 app.post('/user/login', function (req, res) {
     let sql = 'SELECT id, firstName, lastName, createdAt, avatar FROM User WHERE userName = ? and password = ?';
     let param = [req.body.userName, req.body.password];
     con.query(sql, param, function (err, result) {
         //console.log(result);
-        if (result != null && result !== '') {
+        if (result != null && result != '') {
             body.status = 200;
             body.message = 'Success';
             body.data = result[0];
@@ -166,7 +166,7 @@ app.post('/user/register', function (req, res) {
     let sql = 'SELECT * FROM User WHERE userName = ?';
     let param = [req.body.userName];
     con.query(sql, param, function (err, result) {
-        if (result == null || result === '') {
+        if (result == null || result == '') {
             sql = 'INSERT INTO User (userName, password, firstName, lastName) VALUES (?, ?, ?, ?)';
             param = [req.body.userName, req.body.password, req.body.firstName, req.body.lastName];
             con.query(sql, param, function (err, result) {
@@ -286,7 +286,7 @@ app.post('/room', async function (req, res) {
     sql = 'INSERT INTO RoomUsers (idUser, idRoom) VALUES ?';
     result = await query(sql, [param]);
 
-    sql = 'SELECT User.id, userName, firstName, lastName, avatar FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
+    sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
     param = [roomId];
     body.status = 200;
     body.message = 'Success';
@@ -315,7 +315,7 @@ app.get('/room/:id', async function (req, res) {
         room.roomId = rooms[0].id;
         room.type = rooms[0].type;
         room.roomName = rooms[0].roomName;
-        sql = 'SELECT User.id, userName, firstName, lastName, avatar FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
+        sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
         param = [roomId];
         room.users = await query(sql, param);
         body.status = 200;
