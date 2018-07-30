@@ -141,7 +141,7 @@ app.get("", function (req, res) {
     body.message = 'Success';
     body.data = "Server OK!";
     res.send(body);
-})
+});
 
 app.post('/user/login', function (req, res) {
     let sql = 'SELECT id, firstName, lastName, createdAt, avatar FROM User WHERE userName = ? and password = ?';
@@ -286,7 +286,7 @@ app.post('/room', async function (req, res) {
     sql = 'INSERT INTO RoomUsers (idUser, idRoom) VALUES ?';
     result = await query(sql, [param]);
 
-    sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
+    sql = 'SELECT User.id, User.userName, User.firstName, User.lastName, User.avatar FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
     param = [roomId];
     body.status = 200;
     body.message = 'Success';
