@@ -315,7 +315,7 @@ app.get('/room/:id', async function (req, res) {
         room.roomId = rooms[0].id;
         room.type = rooms[0].type;
         room.roomName = rooms[0].roomName;
-        sql = 'SELECT User.id, User.userName, User.firstName, User.lastName FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
+        sql = 'SELECT User.id, User.userName, User.firstName, User.lastName, User.avatar FROM User INNER JOIN RoomUsers ON User.id = RoomUsers.idUser WHERE RoomUsers.idRoom = ?';
         param = [roomId];
         room.users = await query(sql, param);
         body.status = 200;
